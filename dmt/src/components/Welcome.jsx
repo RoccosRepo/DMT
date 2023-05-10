@@ -1,9 +1,12 @@
+import "../css/main.css"
+import Map from "./Map";
+
 export default function Welcome() {
   return (
     <>
       <div className="wrapper">
-        <h1>Welcome To My App</h1>
-        <p>This is going to be the coolest app in the world!</p>
+        <h1>Discover MO Trails</h1>
+        <div><Map /></div>
       </div>
     </>
   );
