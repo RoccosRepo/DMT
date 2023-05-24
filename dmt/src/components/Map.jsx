@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleMap, LoadScript, Autocomplete, Marker, InfoWindow } from '@react-google-maps/api';
 import env from './env';
@@ -17,24 +16,32 @@ const defaultCenter = {
 
 export default function Map() {
   const [location, setLocation] = useState(null);
-  const [markers, setMarkers] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [isLocationAvailable, setIsLocationAvailable] = useState(true);
+  const [zoom, setZoom] = useState(8); // Change zoom to 8
+  const [center, setCenter] = useState(userLocation || defaultCenter); // Set initial center to userLocation or defaultCenter
   const autocompleteRef = useRef(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const userLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        };
-        setUserLocation(userLocation);
-        setLocation(userLocation);
-      }, () => {
-        console.log('Error: The Geolocation service failed.');
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(userLocation);
+          setCenter(userLocation); // Set the center to userLocation
+        },
+        () => {
+          console.log('Error: The Geolocation service failed.');
+          setIsLocationAvailable(false);
+        }
+      );
     } else {
       console.log('Error: Your browser doesn\'t support geolocation.');
+      setIsLocationAvailable(false);
     }
   }, []);
 
@@ -43,10 +50,12 @@ export default function Map() {
     if (place.geometry) {
       const selectedLocation = {
         lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng()
+        lng: place.geometry.location.lng(),
+        name: place.name
       };
-      setLocation(selectedLocation);
-      setMarkers([{ position: selectedLocation, name: place.name }, { position: userLocation, name: 'Your Location' }]);
+      setSelectedLocation(selectedLocation);
+      setZoom(8); // Set zoom to 8
+      setCenter(selectedLocation); // Update the center to the selected location
     }
   };
 
@@ -66,19 +75,19 @@ export default function Map() {
             type="text"
             placeholder="Search address"
             style={{
-              boxSizing: `border-box`,
-              border: `1px solid transparent`,
-              width: `240px`,
-              height: `32px`,
-              padding: `0 12px`,
-              borderRadius: `3px`,
-              boxShadow: `0 2px 6px rgba(0, 0, 0, 0.3)`,
-              fontSize: `14px`,
-              outline: `none`,
-              textOverflow: `ellipses`,
-              position: "absolute",
-              left: "50%",
-              marginLeft: "-120px",
+              boxSizing: 'border-box',
+              border: '1px solid transparent',
+              width: '240px',
+              height: '32px',
+              padding: '0 12px',
+              borderRadius: '3px',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)',
+              fontSize: '14px',
+              outline: 'none',
+              textOverflow: 'ellipses',
+              position: 'absolute',
+              left: '50%',
+              marginLeft: '-120px',
             }}
           />
         </Autocomplete>
@@ -86,10 +95,27 @@ export default function Map() {
 
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={location || userLocation || defaultCenter}
-        zoom={7}
+        center={center}
+        zoom={zoom}
       >
+        {!isLocationAvailable && (
+          <Marker
+            position={defaultCenter}
+            icon={{
+              url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+              labelOrigin: { x: 12, y: -15 },
+            }}
+            label={{
+              text: 'Default Location',
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: '14px',
+              fontFamily: 'Arial',
+            }}
+          />
+        )}
         {userLocation && (
+          <>
           <Marker
             position={userLocation}
             icon={{
@@ -104,28 +130,47 @@ export default function Map() {
               fontFamily: 'Arial',
             }}
           />
+          <InfoWindow
+          position={userLocation}
+          options={{
+            pixelOffset: new window.google.maps.Size(0, -30),
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              padding: '8px',
+              borderRadius: '4px',
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: '14px',
+              fontFamily: 'Arial',
+            }}
+          >
+            Your Location
+          </div>
+        </InfoWindow>
+        </>
         )}
-        {markers.map((marker, index) => (
+        {selectedLocation && (
           <Marker
-            key={index}
-            position={marker.position}
+            position={selectedLocation}
             icon={{
               url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
               labelOrigin: { x: 12, y: -15 },
             }}
             label={{
-              text: marker.name,
+              text: selectedLocation.name,
               color: '#000000',
               fontWeight: 'bold',
               fontSize: '14px',
               fontFamily: 'Arial',
             }}
           />
-        ))}
-        {markers.map((marker, index) => (
+        )}
+        {selectedLocation && (
           <InfoWindow
-            key={index}
-            position={marker.position}
+            position={selectedLocation}
             options={{
               pixelOffset: new window.google.maps.Size(0, -30),
             }}
@@ -141,10 +186,10 @@ export default function Map() {
                 fontFamily: 'Arial',
               }}
             >
-              {marker.name}
+              {selectedLocation.name}
             </div>
           </InfoWindow>
-        ))}
+        )}
       </GoogleMap>
     </LoadScript>
   );
