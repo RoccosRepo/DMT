@@ -5,16 +5,19 @@ import env from './env';
 const mapKey = env.GOOGLE_MAP_KEY;
 const trailKey = env.TRAIL_API_KEY;
 
+// Size for map
 const containerStyle = {
   width: '1000px',
   height: '700px'
 };
 
+// Map center
 const defaultCenter = {
   lat: 38.206591,
   lng: -92.416691
 };
 
+// Map attributes
 export default function Map() {
   const [location, setLocation] = useState(null);
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -24,6 +27,8 @@ export default function Map() {
   const [center, setCenter] = useState(userLocation || defaultCenter);
   const autocompleteRef = useRef(null);
 
+
+// Geolocation
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -33,6 +38,7 @@ export default function Map() {
             lng: position.coords.longitude
           };
           setUserLocation(userLocation);
+          // Sets user location at center of map
           setCenter(userLocation); 
         },
         () => {
@@ -45,6 +51,9 @@ export default function Map() {
       setIsLocationAvailable(false);
     }
   }, []);
+
+
+// Resizes map based on screen size
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
@@ -63,6 +72,7 @@ export default function Map() {
   }, []);
 
 
+// Fetches trail data from API
 //   const fetchTrailData = async () => {
 //     const url = 'https://trailapi-trailapi.p.rapidapi.com/trails/explore/?lat=38.206591&lon=-92.416691&per_page=1000000&radius=100';
 //     const options = {
@@ -86,6 +96,8 @@ export default function Map() {
 
 //   fetchTrailData();
 // }, []);
+
+// Selects location from searchbar to display on map
   const handlePlaceSelect = () => {
     const place = autocompleteRef.current.getPlace();
     if (place.geometry) {
