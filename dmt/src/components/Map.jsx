@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GoogleMap, LoadScript, Autocomplete, Marker, InfoWindow } from '@react-google-maps/api';
 import env from './env';
 
-const apiKey = env.GOOGLE_MAP_KEY;
+const mapKey = env.GOOGLE_MAP_KEY;
+const trailKey = env.TRAIL_API_KEY;
 
 const containerStyle = {
   width: '1000px',
-  height: '600px'
+  height: '700px'
 };
 
 const defaultCenter = {
@@ -19,8 +20,8 @@ export default function Map() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [isLocationAvailable, setIsLocationAvailable] = useState(true);
-  const [zoom, setZoom] = useState(8); // Change zoom to 8
-  const [center, setCenter] = useState(userLocation || defaultCenter); // Set initial center to userLocation or defaultCenter
+  const [zoom, setZoom] = useState(7); 
+  const [center, setCenter] = useState(userLocation || defaultCenter);
   const autocompleteRef = useRef(null);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export default function Map() {
             lng: position.coords.longitude
           };
           setUserLocation(userLocation);
-          setCenter(userLocation); // Set the center to userLocation
+          setCenter(userLocation); 
         },
         () => {
           console.log('Error: The Geolocation service failed.');
@@ -44,7 +45,47 @@ export default function Map() {
       setIsLocationAvailable(false);
     }
   }, []);
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      setContainerStyle({
+        width: `${width}px`,
+        height: `${height}px`
+      });
+    };
 
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+
+//   const fetchTrailData = async () => {
+//     const url = 'https://trailapi-trailapi.p.rapidapi.com/trails/explore/?lat=38.206591&lon=-92.416691&per_page=1000000&radius=100';
+//     const options = {
+//       method: 'GET',
+//       headers: {
+//         'X-RapidAPI-Key': {trailKey},
+//         'X-RapidAPI-Host': 'trailapi-trailapi.p.rapidapi.com'
+//       }
+//     };
+
+//     try {
+//       const response = await fetch(url, options);
+//       const data = await response.json();
+//       const trails = data.results;
+//       const trailNames = trails.map(trail => trail.name);
+//       setTrailSuggestions(trailNames);
+//     } catch (error) {
+//       console.error(error);
+//     }
+//   };
+
+//   fetchTrailData();
+// }, []);
   const handlePlaceSelect = () => {
     const place = autocompleteRef.current.getPlace();
     if (place.geometry) {
@@ -54,14 +95,14 @@ export default function Map() {
         name: place.name
       };
       setSelectedLocation(selectedLocation);
-      setZoom(8); // Set zoom to 8
-      setCenter(selectedLocation); // Update the center to the selected location
+      setZoom(8);
+      setCenter(selectedLocation); 
     }
   };
 
   return (
     <LoadScript
-      googleMapsApiKey={apiKey}
+      googleMapsApiKey={mapKey}
       libraries={['places']}
     >
       <div>
